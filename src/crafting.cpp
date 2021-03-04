@@ -25,6 +25,7 @@
 #include "craft_command.h"
 #include "crafting_gui.h"
 #include "debug.h"
+#include "effect.h"
 #include "enums.h"
 #include "faction.h"
 #include "flag.h"
@@ -119,6 +120,10 @@ static bool crafting_allowed( const player &p, const recipe &rec )
         return false;
     }
 
+    if( p.effect_craft_speed_multiplier() <= 0.0f ) {
+        add_msg( m_info, _( "You cannot craft at this time." ) );
+    }
+
     if( rec.category == "CC_BUILDING" ) {
         add_msg( m_info, _( "Overmap terrain building recipes are not implemented yet!" ) );
         return false;
@@ -152,6 +157,21 @@ float player::lighting_craft_speed_multiplier( const recipe &rec ) const
                 8 - exceeds_recipe_requirements( rec ) ) / 6.0f;
     }
     return 0.0f; // it's dark and you could craft this if you had more skill
+}
+
+float player::effect_craft_speed_multiplier() const
+{
+    float ret = 1.0f;
+
+    // auto = pair<effect_id, map<body_part, effect>>
+    for( const auto &effect_list : *effects ) {
+        for( const std::pair<const body_part, effect> &pair : effect_list.second ) {
+            const effect &eff = pair.second;
+            ret *= eff.crafting_speed_mult( resists_effect( eff ) );
+        }
+    }
+
+    return ret;
 }
 
 float player::morale_crafting_speed_multiplier( const recipe &rec ) const
@@ -259,7 +279,8 @@ float workbench_crafting_speed_multiplier( const item &craft, const bench_locati
 float crafting_speed_multiplier( const player &p, const recipe &rec, bool in_progress )
 {
     const float result = p.morale_crafting_speed_multiplier( rec ) *
-                         p.lighting_craft_speed_multiplier( rec );
+                         p.lighting_craft_speed_multiplier( rec ) *
+                         p.effect_craft_speed_multiplier();
     // Can't start if we'd need 300% time, but we can still finish the job
     if( !in_progress && result < 0.33f ) {
         return 0.0f;
@@ -284,13 +305,19 @@ float crafting_speed_multiplier( const player &p, const item &craft, const bench
     const float light_multi = p.lighting_craft_speed_multiplier( rec );
     const float bench_multi = workbench_crafting_speed_multiplier( craft, bench );
     const float morale_multi = p.morale_crafting_speed_multiplier( rec );
+    const float effect_multi = p.effect_craft_speed_multiplier();
 
-    const float total_multi = light_multi * bench_multi * morale_multi;
+    const float total_multi = light_multi * bench_multi * morale_multi * effect_multi;
 
     if( light_multi <= 0.0f ) {
         p.add_msg_if_player( m_bad, _( "You can no longer see well enough to keep crafting." ) );
         return 0.0f;
     }
+    if( effect_multi <= 0.0f ) {
+        p.add_msg_if_player( m_bad, _( "You cannot craft at this time." ) );
+        return 0.0f;
+    }
+
     if( bench_multi <= 0.1f || ( bench_multi <= 0.33f && total_multi <= 0.2f ) ) {
         p.add_msg_if_player( m_bad, _( "The %s is too large and/or heavy to work on.  You may want to"
                                        " use a workbench or a smaller batch size" ), craft.tname() );

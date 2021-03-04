@@ -9,6 +9,7 @@
 #include "color.h"
 #include "debug.h"
 #include "enums.h"
+#include "generic_factory.h"
 #include "json.h"
 #include "messages.h"
 #include "output.h"
@@ -1178,6 +1179,23 @@ int effect::get_int_add_val() const
     return eff_type->int_add_val;
 }
 
+float effect::crafting_speed_mult( bool resists ) const
+{
+    int options = eff_type->crafting_speed_mult.size();
+    if( options == 0 ) {
+        return 1.0f;
+    }
+
+    // turn the intensity into an index in the multiplier vector
+    int idx = std::max( intensity - 1, options - 1 );
+
+    if( resists ) {
+        return eff_type->crafting_speed_mult[idx].second;
+    }
+
+    return eff_type->crafting_speed_mult[idx].first;
+}
+
 std::vector<std::pair<std::string, int>> effect::get_miss_msgs() const
 {
     return eff_type->miss_msgs;
@@ -1326,6 +1344,8 @@ void load_effect_type( const JsonObject &jo )
 
     new_etype.load_mod_data( jo, "base_mods" );
     new_etype.load_mod_data( jo, "scaling_mods" );
+
+    optional( jo, false, "crafting_mults", new_etype.crafting_speed_mult );
 
     new_etype.impairs_movement = hardcoded_movement_impairing.count( new_etype.id ) > 0;
 

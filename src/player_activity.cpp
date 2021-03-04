@@ -132,12 +132,14 @@ static std::string craft_progress_message( const avatar &u, const player_activit
     const float light_mult = u.lighting_craft_speed_multiplier( rec );
     const float bench_mult = workbench_crafting_speed_multiplier( *craft, bench );
     const float morale_mult = u.morale_crafting_speed_multiplier( rec );
+    const float effect_mult = u.effect_craft_speed_multiplier();
     const int assistants = u.available_assistant_count( craft->get_making() );
     const float base_total_moves = std::max( 1, rec.batch_time( craft->charges, 1.0f, 0 ) );
     const float assist_total_moves = std::max( 1, rec.batch_time( craft->charges, 1.0f, assistants ) );
     const float assist_mult = base_total_moves / assist_total_moves;
     const float speed_mult = u.get_speed() / 100.0f;
-    const float total_mult = light_mult * bench_mult * morale_mult * assist_mult * speed_mult;
+    const float total_mult = light_mult * bench_mult * morale_mult * assist_mult * speed_mult *
+                             effect_mult;
 
     const double remaining_percentage = 1.0 - craft->item_counter / 10'000'000.0;
     int remaining_turns = remaining_percentage * base_total_moves / 100 / std::max( 0.01f, total_mult );

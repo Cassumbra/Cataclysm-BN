@@ -135,6 +135,8 @@ class effect_type
         std::string remove_message;
         std::string remove_memorial_log;
 
+        std::vector<std::pair<float, float>> crafting_speed_mult;
+
         /** Key tuple order is:("base_mods"/"scaling_mods", reduced: bool, type of mod: "STR", desired argument: "tick") */
         std::unordered_map <
         std::tuple<std::string, bool, std::string, std::string>, double, cata::tuple_hash > mod_data;
@@ -280,6 +282,9 @@ class effect
         time_duration get_int_dur_factor() const;
         /** Returns the amount an already existing effect intensity is modified by further applications of the same effect. */
         int get_int_add_val() const;
+
+        /** Returns the crafting multiplier given by the current effect */
+        float crafting_speed_mult( bool resists ) const;
 
         /** Returns a vector of the miss message messages and chances for use in add_miss_reason() while the effect is in effect. */
         std::vector<std::pair<std::string, int>> get_miss_msgs() const;

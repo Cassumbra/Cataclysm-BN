@@ -268,6 +268,16 @@ so on. The messages will print whenever the intensity decreases to their matchin
 whether through decay ticks or through "int_dur_factor". So if it decayed to intensity 2 from 3+ it would display
 "OOGA-BOOGA.  You feel AWFUL!" as a bad message to the player.
 
+### Crafting modifiers
+```json
+    "crafting_mults": [ [ 0.5, 1.0 ], [ 0.2, 0.5 ] ]
+```
+The crafting speed multipliers at various intensity levels of this effect.
+Each sub-array within the array corresponds to the multiplier at the intensity level (e.g. for this, intensity 1 is [ 0.5, 1.0 ], and for intensity 2 [ 0.2, 0.5 ]).
+If the intensity is greater than the number of entries in the array, the last entry is chosen.
+The first entry in each sub-array is the non-resistant multiplier, and the second the resistant multiplier.
+When the multiplier is greater than 1, it will take longer to craft, and when it is less than 1 it will take less time.
+
 ### Targeting modifiers
 ```C++
     "main_parts_only": true     - Defaults to false
